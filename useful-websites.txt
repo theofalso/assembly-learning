@@ -5,6 +5,8 @@ https://www.felixcloutier.com/x86/
 nasm
 
 https://www.nasm.us/xdoc/3.01rc9/nasmdoc.txt
+https://github.com/funnydman/nasm-assembly-examples
+https://github.com/Sakib2263/64-Bit-NASM-Assembly-Code-Examples
 
 for linux syscalls 
 
