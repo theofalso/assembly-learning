@@ -74,7 +74,6 @@ _boom:
     mov rdx, len_scare
     syscall
 
-    ; 3. Ahora sí, salimos del juego
     jmp _exit
 
 _exit:
