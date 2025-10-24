@@ -1,0 +1,12 @@
+instructions
+
+https://www.felixcloutier.com/x86/
+
+nasm
+
+https://www.nasm.us/xdoc/3.01rc9/nasmdoc.txt
+
+for linux syscalls 
+
+https://syscalls.w3challs.com/?arch=x86_64
+
