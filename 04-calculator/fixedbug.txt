@@ -1,0 +1,2 @@
+In the previous version, I saved the operator in "cl". The cl register is the lower part of rcx. The contents of rcx are destroyed upon syscall. By replacing cl with r12b (a secure register), we guarantee that its value will not be erased.
+al wich is the lower part of rax, is volatile (it's destroyed on each syscall) but we don't allow any syscall to erase it because it's the last one.
