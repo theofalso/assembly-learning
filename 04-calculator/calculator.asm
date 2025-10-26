@@ -1,10 +1,10 @@
-: one digit calculator
+; one digit calculator
 
 section .data
     msg_num1 db 'enter the first number (0-9)', 0x0A
     len_num1 equ $ - msg_num1
     
-    msg_op   db 'enter operator (+ o -): ', 0x0A
+    msg_op   db 'enter operator (+ - * /): ', 0x0A
     len_op   equ $ - msg_op
     
     msg_num2 db 'enter the second number (0-9): ', 0x0A
@@ -82,6 +82,12 @@ _start:
 
     cmp r12b, 45  ; '-'
     je _do_sub
+
+    cmp r12b, 42  ; '*'
+    je _do_mul
+
+    cmp r12b, 47  ; '/'
+    je _do_div
     
     jmp _exit 
 
@@ -93,6 +99,15 @@ _do_sub:
     sub bl, al
     mov al, bl
     jmp _print_result
+
+_do_mul:
+    mul bl
+    jmp _print_result
+
+_do_div:
+    mov cl, al
+    mov al, bl
+    div cl
 
 _print_result:
     add al, 48 
