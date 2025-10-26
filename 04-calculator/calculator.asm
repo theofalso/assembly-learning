@@ -1,4 +1,4 @@
-; one digit calculator
+: one digit calculator
 
 section .data
     msg_num1 db 'enter the first number (0-9)', 0x0A
@@ -12,15 +12,18 @@ section .data
     
     msg_res  db 'result: '
     len_res  equ $ - msg_res
+    
+    newline  db 0x0A
 
 section .bss
-    userInput resb 4
-    result    resb 1  ; result buffer
+    userInput resb 2
+    result    resb 1  
 
 section .text
     global _start
 
 _start:
+    ;first number
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num1
@@ -30,13 +33,14 @@ _start:
     mov rax, 0
     mov rdi, 0
     mov rsi, userInput
-    mov rdx, 4
+    mov rdx, 2
     syscall
     
     mov al, [userInput]
     sub al, 48
     mov bl, al
 
+    ; raed operator
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_op
@@ -46,38 +50,40 @@ _start:
     mov rax, 0
     mov rdi, 0
     mov rsi, userInput
-    mov rdx, 4
+    mov rdx, 2
     syscall
     
-    mov cl, [userInput]
+    mov r12b, [userInput]
 
-    ; second number
+    ; read second number
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num2
     mov rdx, len_num2
     syscall
 
+
     mov rax, 0
     mov rdi, 0
     mov rsi, userInput
-    mov rdx, 4
+    mov rdx, 2
     syscall
     
+ 
     mov al, [userInput]
-    sub al, 48
+    sub al, 48 
 
-; 'bl' first has the first number
-; 'cl' has the operator 
-; 'al' has the second number
+; bl has the first number
+; r12b has the operator
+; al has the second number
 
-    cmp cl, '+'
+    cmp r12b, 43  ; '+'
     je _do_add
 
-    cmp cl, '-'
+    cmp r12b, 45  ; '-'
     je _do_sub
     
-    jmp _exit
+    jmp _exit 
 
 _do_add:
     add al, bl
@@ -89,9 +95,7 @@ _do_sub:
     jmp _print_result
 
 _print_result:
-    ; al has the result in both cases
-    add al, 48
-
+    add al, 48 
     mov [result], al
 
     mov rax, 1
@@ -102,12 +106,16 @@ _print_result:
 
     mov rax, 1
     mov rdi, 1
-    mov rsi, result 
-    mov rdx, 1         
+    mov rsi, result
+    mov rdx, 1
     syscall
     
-    jmp _exit
-
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, newline
+    mov rdx, 1
+    syscall
+    
 _exit:
     mov rax, 60
     mov rdi, 0
