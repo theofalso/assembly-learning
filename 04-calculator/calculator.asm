@@ -1,11 +1,12 @@
+
 section .data
-    msg_num1 db 'enter the first number (0-9)', 0x0A
+    msg_num1 db 'enter the first number: ', 0x0A
     len_num1 equ $ - msg_num1
     
     msg_op   db 'enter operator (+ - * /): ', 0x0A
     len_op   equ $ - msg_op
     
-    msg_num2 db 'enter the second number (0-9): ', 0x0A
+    msg_num2 db 'enter the second number: ', 0x0A
     len_num2 equ $ - msg_num2
     
     msg_res  db 'result: '
@@ -14,29 +15,22 @@ section .data
     newline  db 0x0A
 
 section .bss
-    userInput resb 2
-    result    resb 1
+    userInput resb 16
+    result    resb 1  
 
 section .text
     global _start
 
 _start:
-    ;first number
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num1
     mov rdx, len_num1
     syscall
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, userInput
-    mov rdx, 2
-    syscall
-    mov al, [userInput]
-    sub al, 48
-    mov bl, al
+    
+    call _read_number
+    mov rbx, rax
 
-    ; raed operator
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_op
@@ -45,23 +39,18 @@ _start:
     mov rax, 0
     mov rdi, 0
     mov rsi, userInput
-    mov rdx, 2
+    mov rdx, 2; operator + n/
     syscall
     mov r12b, [userInput]
 
-    ; read second number
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num2
     mov rdx, len_num2
     syscall
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, userInput
-    mov rdx, 2
-    syscall
-    mov al, [userInput]
-    sub al, 48
+    
+    call _read_number
+    mov r13, rax
 
     cmp r12b, 43  ; '+'
     je _do_add
@@ -74,31 +63,69 @@ _start:
     jmp _exit 
 
 _do_add:
-    add al, bl
-    mov ah, 0 
+    add rbx, r13
+    mov rax, rbx
     jmp _print_setup
 
 _do_sub:
-    sub bl, al 
-    mov al, bl
-    mov ah, 0
+    sub rbx, r13
+    mov rax, rbx
     jmp _print_setup
 
 _do_mul:
-    mul bl
+    mov rax, rbx
+    mul r13
     jmp _print_setup
 
 _do_div:
-    mov cl, al
-    mov al, bl ; al has the number to be divided
-    mov ah, 0
+    mov rax, rbx      ; rax cotains the number to be divided
+    mov rdx, 0
     
-    cmp cl, 0
-    je _exit ; div per 0 not sopported
+    cmp r13, 0
+    je _exit
     
-    div cl ; al = quotient, ah = remainder
-    mov ah, 0
+    div r13 ; rax = rax / r13
     jmp _print_setup
+
+_read_number:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, userInput
+    mov rdx, 16
+    syscall
+    
+    mov rsi, userInput
+    call _atoi
+    ret
+
+
+_atoi:
+    mov rax, 0
+    mov r14, 10
+    
+_atoi_loop:
+    movzx rcx, byte [rsi]
+    inc rsi
+    
+    cmp rcx, 10
+    je _atoi_done
+    
+    cmp rcx, '0'
+    jl _atoi_loop
+    
+    cmp rcx, '9'
+    jg _atoi_loop
+    
+    sub rcx, 48
+    
+    mul r14
+    add rax, rcx
+    
+    jmp _atoi_loop
+    
+_atoi_done:
+    ret
+
 
 _print_setup:
 
@@ -112,6 +139,7 @@ _print_setup:
 
     pop rax
     
+    ;itoa function
     call _print_number
 
     mov rax, 1
@@ -122,21 +150,17 @@ _print_setup:
     
     jmp _exit
 
-; itoa function
 _print_number:
-
     mov r12, 0 ; r12 is the digit counter
-    mov rbx, 10 
-
-    cmp ax, 0
+    mov r14, 10
+    cmp rax, 0
     je _print_zero
     
 _convert_loop:
     mov rdx, 0
-    div rbx; divide rax by 10
+    div r14; divide rax by 10
     push rdx; save digit
     inc r12; r12 is the digit counter
-    
     cmp rax, 0
     jne _convert_loop
     
@@ -154,9 +178,10 @@ _print_loop:
     mov rsi, result
     mov rdx, 1
     syscall
+    
     dec r12
     jmp _print_loop
-
+    
 _print_zero:
     mov [result], byte '0'
     mov rax, 1
