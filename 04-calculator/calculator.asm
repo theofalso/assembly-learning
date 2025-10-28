@@ -1,4 +1,3 @@
-
 section .data
     msg_num1 db 'enter the first number: ', 0x0A
     len_num1 equ $ - msg_num1
@@ -22,6 +21,7 @@ section .text
     global _start
 
 _start:
+   
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num1
@@ -42,6 +42,7 @@ _start:
     mov rdx, 2; operator + n/
     syscall
     mov r12b, [userInput]
+
 
     mov rax, 1
     mov rdi, 1
@@ -74,17 +75,18 @@ _do_sub:
 
 _do_mul:
     mov rax, rbx
-    mul r13
+    imul r13
     jmp _print_setup
 
 _do_div:
-    mov rax, rbx      ; rax cotains the number to be divided
-    mov rdx, 0
-    
+    mov rax, rbx; rax cotains the number to be divided
+    cqo; Convert Quadword to Octoword this instruction extends the sign of rax into rdx
+    ;mov rdx, 0
     cmp r13, 0
     je _exit
     
-    div r13 ; rax = rax / r13
+ 
+    idiv r13
     jmp _print_setup
 
 _read_number:
@@ -98,12 +100,21 @@ _read_number:
     call _atoi
     ret
 
-
 _atoi:
     mov rax, 0
     mov r14, 10
+    mov r15, 0; negative flag
+
+
+    movzx rcx, byte [rsi]
+    cmp rcx, 45; is it '-'?
+    jne _atoi_loop_start ; if not, start loop
     
-_atoi_loop:
+    ;if it is '-', set negative flag
+    mov r15, 1
+    inc rsi
+    
+_atoi_loop_start:
     movzx rcx, byte [rsi]
     inc rsi
     
@@ -111,24 +122,30 @@ _atoi_loop:
     je _atoi_done
     
     cmp rcx, '0'
-    jl _atoi_loop
+    jl _atoi_loop_start
     
     cmp rcx, '9'
-    jg _atoi_loop
+    jg _atoi_loop_start
     
     sub rcx, 48
     
     mul r14
     add rax, rcx
     
-    jmp _atoi_loop
+    jmp _atoi_loop_start
     
 _atoi_done:
+    ; Check negative flag
+    cmp r15, 1
+    jne _atoi_return; if not negative, return
+    
+    neg rax; if negative, negate the result
+    
+_atoi_return:
     ret
 
 
 _print_setup:
-
     push rax
 
     mov rax, 1
@@ -139,7 +156,6 @@ _print_setup:
 
     pop rax
     
-    ;itoa function
     call _print_number
 
     mov rax, 1
@@ -150,35 +166,48 @@ _print_setup:
     
     jmp _exit
 
+
 _print_number:
-    mov r12, 0 ; r12 is the digit counter
+    mov r12, 0; r12 is the digit counter
     mov r14, 10
+    
+    ; rax is negative?
     cmp rax, 0
     je _print_zero
+    jge _convert_loop; if is positive, skip sign handling
     
-_convert_loop:
-    mov rdx, 0
-    div r14; divide rax by 10
-    push rdx; save digit
-    inc r12; r12 is the digit counter
-    cmp rax, 0
-    jne _convert_loop
+    ;if negative:
+    push rax
     
-_print_loop:
-    cmp r12, 0; any digits left?
-    je _print_done
-    
-    pop rax
-    add rax, 48
-    
-    mov [result], al
-    
+    mov [result], byte '-' ;print '-'
     mov rax, 1
     mov rdi, 1
     mov rsi, result
     mov rdx, 1
     syscall
+
+    pop rax
+    neg rax
     
+_convert_loop:
+    mov rdx, 0
+    div r14
+    push rdx
+    inc r12
+    cmp rax, 0
+    jne _convert_loop
+    
+_print_loop:
+    cmp r12, 0
+    je _print_done
+    pop rax
+    add rax, 48
+    mov [result], al
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, result
+    mov rdx, 1
+    syscall
     dec r12
     jmp _print_loop
     
