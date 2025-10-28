@@ -12,3 +12,7 @@ for linux syscalls
 
 https://syscalls.w3challs.com/?arch=x86_64
 
+guides:
+
+https://www.youtube.com/watch?v=igaLd9UAHP8
+
