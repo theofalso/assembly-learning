@@ -1,3 +1,3 @@
 this generates a ISO for a VM. print wake up neo...
 
-![Demostración del proyecto](./demo.gif)
+![demo](./demo.gif)
