@@ -1,11 +1,21 @@
+; CALCULATOR by theofalso. Assembly x86-64 Linux NASM. github.com/theofalso/assembly-learning
+;
+;   rbx: main acumulator, holding num1 and the result of the previous calculations
+;   r12b stores the operator, r12 (the full register) used in _print_number
+;   r13 holds the converted value for num2
+;   r14 used as safe place to store the constant 10 for atoi and print number, and the constant 100 for scaling
+;   r15 used in atoi as negative flag
+;   rbp used in _print_number as safe temporary copy of the numer while counting digits
+;
+
 section .data
-    msg_num1 db 'enter the first number (e.g., 123.45): ', 0x0A
+    msg_num1 db 'Enter the first number: ', 0x0A
     len_num1 equ $ - msg_num1
     
-    msg_op   db 'enter operator (+ - * /): ', 0x0A
+    msg_op   db 'Enter operator (+ - * /) or ( c = Clear, q = Quit): ', 0x0A
     len_op   equ $ - msg_op
     
-    msg_num2 db 'enter the second number: ', 0x0A
+    msg_num2 db 'Enter the next number: ', 0x0A
     len_num2 equ $ - msg_num2
     
     msg_res  db 'result: '
@@ -22,6 +32,7 @@ section .text
     global _start
 
 _start:
+    ; first number (start or clear)
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num1
@@ -31,6 +42,10 @@ _start:
     call _read_number
     mov rbx, rax
 
+_main_loop: ; rbx contains the accumulator, r12b the operator, r13 holds the converted and scalated num2
+
+
+    ; read operator
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_op
@@ -39,10 +54,14 @@ _start:
     mov rax, 0
     mov rdi, 0
     mov rsi, userInput
-    mov rdx, 2; operator + '\n'
+    mov rdx, 2
     syscall
     mov r12b, [userInput]
 
+    cmp r12b, 'c'
+    je _start           ; cleaer
+    cmp r12b, 'q'
+    je _exit            ; quit
 
     mov rax, 1
     mov rdi, 1
@@ -53,6 +72,8 @@ _start:
     call _read_number
     mov r13, rax
 
+; rbx = num1 acumulator, r12b operator, r12 num2
+
     cmp r12b, 43  ; '+'
     je _do_add
     cmp r12b, 45  ; '-'
@@ -61,7 +82,8 @@ _start:
     je _do_mul
     cmp r12b, 47  ; '/'
     je _do_div
-    jmp _exit 
+    
+    jmp _main_loop
 
 _do_add:
     add rbx, r13
@@ -79,21 +101,23 @@ _do_mul:
     
     mov r14, 100
     idiv r14
+    
+    mov rbx, rax
     jmp _print_setup
 
 _do_div:
     mov rax, rbx
-    cqo; Convert Quadword to Octoword this instruction extends the sign of rax into rdx
+    
     mov r14, 100
     imul r14
-    
-    mov rdx, 0
+    cqo
     cmp r13, 0
     je _exit
-    
     idiv r13
+    mov rbx, rax
     jmp _print_setup
 
+; user types string into stdin, rax will contain the converted, scaled and signed integer
 _read_number:
     mov rax, 0
     mov rdi, 0
@@ -105,72 +129,58 @@ _read_number:
     call _atoi
     ret
 
+; atoi function with decimal point handling
 _atoi:
-    mov rax, 0; rax total
+    mov rax, 0
     mov r14, 10
-    mov r15, 0; r15 negative flag
-    mov r10, 0; r10 decimal counter
-    mov r11, 0; r11 = coma flag
-
-; is the first character a '-'?
+    mov r15, 0
+    mov r10, 0
+    mov r11, 0
     movzx rcx, byte [rsi]
     cmp rcx, 45
     jne _atoi_loop_start
     mov r15, 1
     inc rsi
-    
 _atoi_loop_start:
     movzx rcx, byte [rsi]
     inc rsi
-    
-    cmp rcx, 10; is a newline?
-    je _atoi_scale; go to scaling
-    
-    cmp rcx, 46; is a decimal point?
+    cmp rcx, 10
+    je _atoi_scale
+    cmp rcx, 46
     je _atoi_found_decimal
-    
     cmp rcx, '0'
     jl _atoi_loop_start
     cmp rcx, '9'
     jg _atoi_loop_start
-    
     sub rcx, 48
-    
     mul r14
     add rax, rcx
-    
-    cmp r11, 1; we already found a decimal point?
+    cmp r11, 1
     jne _atoi_loop_start
-    inc r10; if yes increment decimal counter
-    
+    inc r10
     jmp _atoi_loop_start
-
 _atoi_found_decimal:
-    mov r11, 1; set the decimal point found flag
+    mov r11, 1
     jmp _atoi_loop_start
-
 _atoi_scale:
     cmp r10, 2
     je _atoi_done
-    
     cmp r10, 1
     je _atoi_scale_10
-    
     mov r14, 100
     mul r14
     jmp _atoi_done
-    
 _atoi_scale_10:
     mov r14, 10
     mul r14
-    
 _atoi_done:
     cmp r15, 1
     jne _atoi_return
     neg rax
-    
 _atoi_return:
     ret
+
+; input rax: contains the scaled integer to be printed/ output: prints de formatted number to stdout. this modifies r12, r14, rbp and uses stack
 
 _print_setup:
     push rax
@@ -186,17 +196,15 @@ _print_setup:
     mov rsi, newline
     mov rdx, 1
     syscall
-    jmp _exit
+    jmp _main_loop
 
+; itoa function with decimal point handling
 _print_number:
     mov r12, 0
     mov r14, 10
-    
     cmp rax, 0
     je _print_zero
     jge _check_positive
-    
-    ; Es negativo:
     push rax
     mov [result], byte '-'
     mov rax, 1
@@ -206,7 +214,6 @@ _print_number:
     syscall
     pop rax
     neg rax
-    
 _check_positive:
     push rax
     mov rbp, rax
@@ -216,31 +223,23 @@ _count_digits_loop:
     inc r12
     cmp rax, 0
     jne _count_digits_loop
-    
     pop rax
-    
-    ;r12 contains the number of digits before decimal point
-    
     cmp r12, 2
     jg _print_loop_start
-    
     mov [result], byte '0'
     mov rax, 1
     mov rdi, 1
     mov rsi, result
     mov rdx, 1
     syscall
-    
     cmp r12, 1
     jne _print_loop_start
-    
     mov [result], byte '0'
     mov rax, 1
     mov rdi, 1
     mov rsi, result
     mov rdx, 1
     syscall
-
 _print_loop_start:
     mov rax, rbp
 _convert_loop:
@@ -252,14 +251,13 @@ _convert_loop:
 _print_loop:
     cmp r12, 0
     je _print_done
-    cmp r12, 2 ; if r12 is 2 print decimal point
+    cmp r12, 2
     jne _print_digit
     mov rax, 1
     mov rdi, 1
     mov rsi, decimal_point
     mov rdx, 1
     syscall
-    
 _print_digit:
     pop rax
     add rax, 48
@@ -271,7 +269,6 @@ _print_digit:
     syscall
     dec r12
     jmp _print_loop
-    
 _print_zero:
     mov [result], byte '0'
     mov rax, 1
@@ -279,9 +276,9 @@ _print_zero:
     mov rsi, result
     mov rdx, 1
     syscall
-
 _print_done:
     ret
+
 _exit:
     mov rax, 60
     mov rdi, 0
