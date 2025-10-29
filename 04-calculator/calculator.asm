@@ -1,5 +1,5 @@
 section .data
-    msg_num1 db 'enter the first number: ', 0x0A
+    msg_num1 db 'enter the first number (e.g., 123.45): ', 0x0A
     len_num1 equ $ - msg_num1
     
     msg_op   db 'enter operator (+ - * /): ', 0x0A
@@ -12,6 +12,7 @@ section .data
     len_res  equ $ - msg_res
     
     newline  db 0x0A
+    decimal_point db '.'
 
 section .bss
     userInput resb 16
@@ -21,7 +22,6 @@ section .text
     global _start
 
 _start:
-   
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_num1
@@ -39,7 +39,7 @@ _start:
     mov rax, 0
     mov rdi, 0
     mov rsi, userInput
-    mov rdx, 2; operator + n/
+    mov rdx, 2; operator + '\n'
     syscall
     mov r12b, [userInput]
 
@@ -76,16 +76,21 @@ _do_sub:
 _do_mul:
     mov rax, rbx
     imul r13
+    
+    mov r14, 100
+    idiv r14
     jmp _print_setup
 
 _do_div:
-    mov rax, rbx; rax cotains the number to be divided
+    mov rax, rbx
     cqo; Convert Quadword to Octoword this instruction extends the sign of rax into rdx
-    ;mov rdx, 0
+    mov r14, 100
+    imul r14
+    
+    mov rdx, 0
     cmp r13, 0
     je _exit
     
- 
     idiv r13
     jmp _print_setup
 
@@ -101,16 +106,16 @@ _read_number:
     ret
 
 _atoi:
-    mov rax, 0
+    mov rax, 0; rax total
     mov r14, 10
-    mov r15, 0; negative flag
+    mov r15, 0; r15 negative flag
+    mov r10, 0; r10 decimal counter
+    mov r11, 0; r11 = coma flag
 
-
+; is the first character a '-'?
     movzx rcx, byte [rsi]
-    cmp rcx, 45; is it '-'?
-    jne _atoi_loop_start ; if not, start loop
-    
-    ;if it is '-', set negative flag
+    cmp rcx, 45
+    jne _atoi_loop_start
     mov r15, 1
     inc rsi
     
@@ -118,12 +123,14 @@ _atoi_loop_start:
     movzx rcx, byte [rsi]
     inc rsi
     
-    cmp rcx, 10
-    je _atoi_done
+    cmp rcx, 10; is a newline?
+    je _atoi_scale; go to scaling
+    
+    cmp rcx, 46; is a decimal point?
+    je _atoi_found_decimal
     
     cmp rcx, '0'
     jl _atoi_loop_start
-    
     cmp rcx, '9'
     jg _atoi_loop_start
     
@@ -132,74 +139,128 @@ _atoi_loop_start:
     mul r14
     add rax, rcx
     
+    cmp r11, 1; we already found a decimal point?
+    jne _atoi_loop_start
+    inc r10; if yes increment decimal counter
+    
     jmp _atoi_loop_start
+
+_atoi_found_decimal:
+    mov r11, 1; set the decimal point found flag
+    jmp _atoi_loop_start
+
+_atoi_scale:
+    cmp r10, 2
+    je _atoi_done
+    
+    cmp r10, 1
+    je _atoi_scale_10
+    
+    mov r14, 100
+    mul r14
+    jmp _atoi_done
+    
+_atoi_scale_10:
+    mov r14, 10
+    mul r14
     
 _atoi_done:
-    ; Check negative flag
     cmp r15, 1
-    jne _atoi_return; if not negative, return
-    
-    neg rax; if negative, negate the result
+    jne _atoi_return
+    neg rax
     
 _atoi_return:
     ret
 
-
 _print_setup:
     push rax
-
     mov rax, 1
     mov rdi, 1
     mov rsi, msg_res
     mov rdx, len_res
     syscall
-
     pop rax
-    
     call _print_number
-
     mov rax, 1
     mov rdi, 1
     mov rsi, newline
     mov rdx, 1
     syscall
-    
     jmp _exit
 
-
 _print_number:
-    mov r12, 0; r12 is the digit counter
+    mov r12, 0
     mov r14, 10
     
-    ; rax is negative?
     cmp rax, 0
     je _print_zero
-    jge _convert_loop; if is positive, skip sign handling
+    jge _check_positive
     
-    ;if negative:
+    ; Es negativo:
     push rax
+    mov [result], byte '-'
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, result
+    mov rdx, 1
+    syscall
+    pop rax
+    neg rax
     
-    mov [result], byte '-' ;print '-'
+_check_positive:
+    push rax
+    mov rbp, rax
+_count_digits_loop:
+    mov rdx, 0
+    div r14
+    inc r12
+    cmp rax, 0
+    jne _count_digits_loop
+    
+    pop rax
+    
+    ;r12 contains the number of digits before decimal point
+    
+    cmp r12, 2
+    jg _print_loop_start
+    
+    mov [result], byte '0'
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, result
+    mov rdx, 1
+    syscall
+    
+    cmp r12, 1
+    jne _print_loop_start
+    
+    mov [result], byte '0'
     mov rax, 1
     mov rdi, 1
     mov rsi, result
     mov rdx, 1
     syscall
 
-    pop rax
-    neg rax
-    
+_print_loop_start:
+    mov rax, rbp
 _convert_loop:
     mov rdx, 0
     div r14
     push rdx
-    inc r12
     cmp rax, 0
     jne _convert_loop
-    
 _print_loop:
     cmp r12, 0
     je _print_done
+    cmp r12, 2 ; if r12 is 2 print decimal point
+    jne _print_digit
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, decimal_point
+    mov rdx, 1
+    syscall
+    
+_print_digit:
     pop rax
     add rax, 48
     mov [result], al
@@ -221,7 +282,6 @@ _print_zero:
 
 _print_done:
     ret
-
 _exit:
     mov rax, 60
     mov rdi, 0
