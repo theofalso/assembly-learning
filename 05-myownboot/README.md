@@ -1,3 +1,3 @@
 this generates a ISO for a VM. print wake up neo...
 
-![demo](./demo.gif)
+![demo](./demo2.gif)
