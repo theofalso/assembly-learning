@@ -34,5 +34,5 @@ load:
 
     jmp 0x500
 
-times 510-($-$$) db 0
-dw 0xaa55s
+times 510-($-$$) db 0 ;512 bytes
+dw 0xaa55             ;assinatura
