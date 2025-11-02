@@ -6,6 +6,7 @@ data:
     ;;;;;;;;;;;;;;;;;;;;;;;;;STRINGS;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     mensagemi db 'theOS - Ver 0.1',13,10,'Iniciando...',13,10,0
+    sprompt db 13,10,'MY-PC>',0
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;GLOBAL VARIABLES;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +37,19 @@ homescreen_fn:
     mov si, mensagemi
     mov bl, 14                                                        ; yellow
     call print_str_color
-    jmp $
+    call exit_to_shell
+    ret                                                               ; back to main loop
+
+shell_fn:
+    mov si, sprompt
+    mov bl, 14                                                        ; yellow
+    call print_str_color
+    jmp $ 
+
+exit_to_shell:
+    mov ax, shell_fn
+    mov [state], ax
+    ret
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;DRIVERS;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
