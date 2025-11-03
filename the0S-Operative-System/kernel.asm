@@ -63,26 +63,54 @@ shell_fn:
     mov si, sprompt
     mov bl, 14                                                ; yellow
     call print_str_color
-    call cursor
-
-    ; initialize parameters for input
     xor dx, dx
     mov di, 0
-    ;ret
-
-    mov bl, 15
-    mov [cor], bl
 
 .input_loop:
     call getc
-    call putc
-    call cursor
 
-
-    cmp dl, 0                                                 ; we already have a char?
-    jne .check_enter                                            ; if not jump back
+    cmp dl, 0
+    jne .notsave
     mov dl, al
-    jmp .check_enter
+.notsave:
+    call putc
+    cmp al, 13                                                 ; enter key?
+    je .handle_enter
+    cmp al, 32
+    jne .notspace
+    cmp di, 0
+    jne .notspace
+
+    mov di, arg
+    jmp .input_loop
+
+.notspace:
+    cmp di, 0
+    je .input_loop
+    stosb
+    jmp .input_loop
+
+.handle_enter:
+
+    cmp di, 0
+    je .find_command
+    mov al, 0
+    stosb
+
+.find_command:
+    mov al, dl
+    sub al, 'a'                                               ; convert to index
+    mov ah, 0
+    mov bx ,2
+    mul bx
+
+    mov bx, ctable
+    add ax, bx
+
+    mov bx, [eax]
+    mov [state], bx
+
+    ret
 
 .check_space:
     cmp al, 32
@@ -107,20 +135,6 @@ shell_fn:
     mov al, 0
     stosb
 
-.find_command:
-    mov al, dl
-    sub al, 'a'                                               ; convert to index
-
-    mov ah, 0
-    mov bx ,2
-    mul bx
-
-    mov bx, ctable
-    add ax, bx
-
-    mov bx, [eax]
-    mov [state], bx
-    ret
 
 exit_to_shell:
     mov ax, shell_fn
@@ -128,6 +142,7 @@ exit_to_shell:
     ret
 
 help_fn:
+    call endl
     mov si, commands
     call print_str
     call exit_to_shell
@@ -139,12 +154,14 @@ clear_fn:
     ret
 
 ef:
+    call endl
     mov si, error_msg
     call print_str
     call exit_to_shell
     ret
 
 about_fn:
+    call endl
     mov si, about_msg
     call print_str
     call endl
@@ -152,6 +169,7 @@ about_fn:
     ret
 
 echo_fn:
+    call endl
     mov si, arg
     call print_str
     call endl
