@@ -8,6 +8,10 @@ https://www.nasm.us/xdoc/3.01rc9/nasmdoc.txt
 https://github.com/funnydman/nasm-assembly-examples
 https://github.com/Sakib2263/64-Bit-NASM-Assembly-Code-Examples
 
+useful codes for implementatios: 
+https://github.com/leonardo-ono/Assembly8086MarioMusicOnPCSpeakerTest/blob/master/mario.asm
+http://www.techhelpmanual.com/221-int_15h_86h__wait.html
+
 for linux syscalls 
 
 https://syscalls.w3challs.com/?arch=x86_64

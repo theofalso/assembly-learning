@@ -77,6 +77,23 @@ init_video:
     mov al, 13h
     int 10h
     ret
+    ;;;;;;;;;;;;;;;;;;;;;;;;;DELAY;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+_delay:
+    push ax
+    mov ah, 86h
+    int 15h
+    pop ax
+    ret
+%macro DELAY 2
+    push cx
+    push dx
+    mov cx, %1
+    mov dx, %2
+    call _delay
+    pop dx
+    pop cx
+%endmacro
 
     ;;;;;;;;;;;;;;;;;;;;;;TEXT PRINT FUNCTION;;;;;;;;;;;;;;;;;;;
 print_str:
@@ -121,6 +138,7 @@ print_str_prompt:
     ret
 
 print_str_color:
+    DELAY 0, 0x4000
     lodsb
     cmp al, 0
     je .done
@@ -129,3 +147,4 @@ print_str_color:
     jmp print_str_color
 .done:
     ret
+
