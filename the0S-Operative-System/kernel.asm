@@ -2,13 +2,17 @@ org 0x7e00
 jmp 0x0000:start
 
 
+
+%include "data.asm"
+%include "drivers.asm"
 %include "shell.asm"
 
 
-%include "drivers.asm"
 
 
-%include "data.asm"
+
+
+
 
 
 start:
@@ -25,3 +29,7 @@ start:
     mov ax, [state]
     call eax
     jmp .loop
+
+
+
+%include "media.asm"

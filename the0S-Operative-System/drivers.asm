@@ -147,4 +147,4 @@ print_str_color:
     jmp print_str_color
 .done:
     ret
-
+;;;;;;;;;;;;;;;;;;;;;PC SPEAKER;;;;;;;;;;;;;;;;;;;;;;;;;;
