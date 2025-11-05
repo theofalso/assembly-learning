@@ -1,7 +1,7 @@
 org 0x500
 jmp 0x0000:start
 
-runningKernel db 'Rodando Kernel...', 0
+runningKernel db 'loading kernel...', 0
 
 
 print_string:
@@ -59,12 +59,16 @@ start:
         xor bx,bx
 
         mov ah, 0x02
-        mov al, 20
+        mov al, 64
         mov ch, 0
         mov cl, 3
         mov dh, 0
         mov dl, 0
+
+        
         int 13h
+
+        
 
         jc load_kernel
 

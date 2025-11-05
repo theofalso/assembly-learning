@@ -122,50 +122,32 @@ echo_fn:
     call exit_to_shell
     ret
 
-; ===================================
-; SHELL.ASM
-; ===================================
-
-; ... (tus otras funciones de comando) ...
-
-; --- REEMPLAZAR show_image_fn ---
 
 
 show_image_fn:
     
     pusha
     call clear_screen
+
+    mov ax, my_image_data
+    xor dx, dx
+    mov bx, 16
+    div bx
     
-    ; --- NUEVA LÓGICA DE COPIA ---
-    ; La dirección de 'my_image_data' es un offset absoluto
-    ; desde 0x0000 (ej: 0x85D0). Necesitamos convertir esto
-    ; a un par Segmento:Offset para que SI no se desborde.
+    mov ds, ax
+    mov si, dx
     
-    ; 1. Calcular el Segmento y Offset de la FUENTE
-    mov ax, my_image_data   ; AX = Offset absoluto (ej: 0x85D0)
-    xor dx, dx              ; DX:AX = 0x0000:0x85D0
-    mov bx, 16              ; Vamos a dividir por 16 (o 0x10)
-    div bx                  ; AX = Segmento (ej: 0x085D), DX = nuevo Offset (ej: 0x0000)
-    
-    mov ds, ax              ; DS = Segmento de la imagen
-    mov si, dx              ; SI = Offset de la imagen (ahora es 0)
-    
-    ; 2. Configurar el DESTINO
-    mov ax, 0xA000          ; Segmento de Video RAM
+    mov ax, 0xA000
     mov es, ax
-    xor di, di              ; DI = 0 (inicio de la VRAM)
+    xor di, di
     
-    ; 3. Copiar 64,000 bytes
-    ; Como SI comienza en 0, puede contar hasta 64,000
-    ; sin desbordarse. DS se encarga del segmento correcto.
     mov cx, 64000
     rep movsb
     
-    ; 4. Restaurar el segmento de datos
+
     xor ax, ax
-    mov ds, ax              ; Restaurar DS a 0 (importante para el resto del kernel)
+    mov ds, ax
     
-    ; 5. Esperar y salir
     call getc
     popa
     
