@@ -11,7 +11,7 @@ https://github.com/Sakib2263/64-Bit-NASM-Assembly-Code-Examples
 useful codes for implementatios: 
 https://github.com/leonardo-ono/Assembly8086MarioMusicOnPCSpeakerTest/blob/master/mario.asm
 http://www.techhelpmanual.com/221-int_15h_86h__wait.html
-
+https://github.com/Captainarash/The_Holy_Book_of_X86
 for linux syscalls 
 
 https://syscalls.w3challs.com/?arch=x86_64
