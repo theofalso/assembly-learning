@@ -1,16 +1,7 @@
-Assembly Learning
+# Assembly Learning
 
 A curated collection of small x86 assembly projects and exercises designed for learning low-level programming, BIOS/boot development, and simple operating system concepts. The repository contains example programs, boot sectors, and an early-stage hobby OS with build scripts and notes.
 
-Table of Contents
- - About
- - Repository structure
- - Quick start
- - Build & run examples
- - Project contracts and edge cases
- - Contributing
- - License
- - Resources
 
 ## About
 
